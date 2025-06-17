@@ -212,3 +212,4 @@ id | sessionId | question | answer | score | feedback | createdAt
 ---
 
 
+![alt text](image.png)

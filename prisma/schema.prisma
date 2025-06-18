@@ -14,24 +14,147 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+  RECRUITER
+}
+
+enum Status {
+  REJECTED
+  SELECTED
+  PENDING
+}
+
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  name      String?
-  createdAt DateTime  @default(now())
-  Profile   Profile[]
+  id               String         @id @default(uuid())
+  email            String         @unique
+  password         String
+  name             String?
+  createdAt        DateTime       @default(now())
+  Profile          Profile[]
+  Resume           Resume[]
+  Jobs             Jobs[]
+  Applications     Applications[]
+  role             Role
+  Interviews       Interviews[]
+  Sessions         Sessions[]
+  SentMessages     Messages[]     @relation("MessageSender")
+  ReceivedMessages Messages[]     @relation("MessageReceiver")
 }
 
 model Profile {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-  bio    String?
-  age    Int?
-  location String?
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  bio        String?
+  age        Int?
+  location   String?
   experience String?
-  skills String[]
-  education String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  skills     String[]
+  education  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Jobs {
+  id               String         @id @default(uuid())
+  recruiterId      String
+  user             User           @relation(fields: [recruiterId], references: [id])
+  title            String
+  company          String
+  description      String
+  location         String
+  skills_required  String[]
+  experience_level String
+  salary_range     String
+  created_At       DateTime       @default(now())
+  Applications     Applications[]
+  Messages         Messages[]
+}
+
+model Resume {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id])
+  file_url         String
+  parsed_text      String
+  extracted_skills String[]
+  score            Int
+  created_At       DateTime       @default(now())
+  Applications     Applications[]
+  Interviews       Interviews[]
+}
+
+model Applications {
+  id         String   @id @default(uuid())
+  job_Id     String
+  job        Jobs     @relation(fields: [job_Id], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  resume_Id  String
+  resume     Resume   @relation(fields: [resume_Id], references: [id])
+  status     Status
+  applied_At DateTime @default(now())
+}
+
+model Interviews {
+  id              String     @id @default(uuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id])
+  resume_Id       String
+  resume          Resume     @relation(fields: [resume_Id], references: [id])
+  ai_agent_type   String     // e.g., "voice", "chat", "combined"
+  started_At      DateTime
+  ended_At        DateTime
+  interview_score Float?
+  status          String     // e.g., "completed", "in-progress", "scheduled"
+  Feedback        Feedback[]
+}
+
+model Feedback {
+  id           String     @id @default(uuid())
+  interview_Id String
+  interview    Interviews @relation(fields: [interview_Id], references: [id])
+  transcript   String
+  summary      String
+  rating       Float
+  suggestions  String
+}
+
+model Messages {
+  id          String   @id @default(uuid())
+  sender_Id   String
+  sender      User     @relation("MessageSender", fields: [sender_Id], references: [id])
+  receiver_Id String
+  receiver    User     @relation("MessageReceiver", fields: [receiver_Id], references: [id])
+  job_Id      String
+  job         Jobs     @relation(fields: [job_Id], references: [id])
+  text        String
+  sent_At     DateTime @default(now())
+  updated_At  DateTime @updatedAt
+  is_Read     Boolean  @default(false)
+}
+
+model Sessions {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  duration    String
+  started_At  DateTime
+  ended_At    DateTime
+  isCompleted Boolean  @default(false)
+}
+
+model Resources {
+  id          String   @id @default(uuid())
+  title       String
+  topic       String
+  url         String
+  description String?
+  category    String   // e.g., "Technical", "Behavioral", "System Design"
+  difficulty  String   // e.g., "Beginner", "Intermediate", "Advanced"
+  tags        String[]
+  created_At  DateTime @default(now())
+  updated_At  DateTime @updatedAt
 }

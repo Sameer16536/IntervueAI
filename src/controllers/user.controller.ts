@@ -45,19 +45,43 @@ const registerUser = async (
 
     //Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if(existingUser){
-        res.status(409).json({
-            message:"User Already exists"
-        })
-        return
+    if (existingUser) {
+      res.status(409).json({
+        message: "User Already exists",
+      });
+      return;
     }
 
     //Hash the password
-    const hashedPassword = await bcrypt.hash(password,10)
+    const hashedPassword = await bcrypt.hash(password, 10);
+    //Create new user
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role,
+      },
+    });
 
-    
+    //Generate Token
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    //send refresh token as cookie
+    res.status(201).json({
+      message: "User Created successfully",
+      user,
+      accessToken,
+      refreshToken,
+    });
   } catch (err) {
-    throw err;
     console.error("Error in Register User", err);
   }
 };
+
+
+
+module.exports = {
+  registerUser
+}

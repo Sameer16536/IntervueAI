@@ -68,7 +68,13 @@ const registerUser = async (
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    //send refresh token as cookie ??
+    //Add refresh token rotation logic later
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
     res.status(201).json({
       message: "User Created successfully",
       user,
@@ -98,15 +104,62 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
-    const accessToken = generateAccessToken(existingUser)
-    const refreshToken = generateRefreshToken(existingUser)
+    const accessToken = generateAccessToken(existingUser);
+    const refreshToken = generateRefreshToken(existingUser);
 
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+        role: existingUser.role,
+      },
+      accessToken,
+      refreshToken,
+    });
   } catch (err) {
     console.error("Error while Login", err);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
 };
+
+
+const logoutUser = async(req: Request, res: Response, next: NextFunction) => {
+  try{
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ message: "No refresh token provided" });
+    }
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      sameSite: "none",
+    });
+    res.status(200).json({ message: "Logout successful" });
+    
+  }catch(err) {
+    console.error("Error while Logout", err);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
 
 module.exports = {
   registerUser,
   loginUser,
+  logoutUser,
 };
+
+

@@ -166,7 +166,7 @@ const getUserProfile = async (
       return;
     }
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id }
+      where: { id: req.user.id },
     });
     if (!user) {
       res.status(404).json({
@@ -190,4 +190,5 @@ module.exports = {
   registerUser,
   loginUser,
   logoutUser,
+  getUserProfile,
 };

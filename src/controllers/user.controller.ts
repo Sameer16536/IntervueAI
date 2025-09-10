@@ -5,6 +5,20 @@ import jwt, { decode, JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { loginInputValidation, userInputValidation } from "../utils/types";
 
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        email: string;
+        name: string;
+        role: string;
+      };
+    }
+  }
+}
+
 const prisma = new PrismaClient();
 
 export const authRateLimiter = rateLimit({
@@ -34,7 +48,7 @@ const generateRefreshToken = (user: any) => {
   );
 };
 
-const registerUser = async (
+export const registerUser = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -87,7 +101,7 @@ const registerUser = async (
   }
 };
 
-const loginUser = async (req: Request, res: Response, next: NextFunction) => {
+export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validateInput = loginInputValidation.parse(req.body);
     const { email, password } = validateInput;
@@ -133,7 +147,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const logoutUser = async (req: Request, res: Response, next: NextFunction) => {
+export const logoutUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
@@ -153,7 +167,7 @@ const logoutUser = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const getUserProfile = async (
+export const getUserProfile = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -186,9 +200,3 @@ const getUserProfile = async (
   }
 };
 
-module.exports = {
-  registerUser,
-  loginUser,
-  logoutUser,
-  getUserProfile,
-};
